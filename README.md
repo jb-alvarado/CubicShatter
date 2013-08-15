@@ -15,9 +15,9 @@ Cubic Shatter
 =========
 
 
-![Cubic Shatter](http://www.pixelcrusher.de/files/CubicShatter.png "CubicShatter")
+![Cubic Shatter](http://www.pixelcrusher.de/files/CubicShatter.png)
 
-![Preview](http://www.pixelcrusher.de/files/CubeShatter.jpg "Preview")
+![Preview](http://www.pixelcrusher.de/files/CubeShatter.jpg)
 
 Download
 --------
