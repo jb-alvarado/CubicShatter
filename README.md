@@ -14,8 +14,10 @@ modified: 2013 August 15
 Cubic Shatter
 =========
 
-![Cubic Shatter](http://www.pixelcrusher.de/files/CubicShatter.png)
+![CubicShatter](http://www.pixelcrusher.de/files/CubicShatter.png)
 
+
+![Preview](http://www.pixelcrusher.de/files/CubeShatter.jpg)
 
 
 Download
