@@ -44,8 +44,7 @@
 ( --start script
 clearlistener()
 
-try ( destroyDialog CubicShatter )
-catch (	MessageBox "Dialog not found!" )	
+try (destroyDialog CubicShatter) catch ()
 
 rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 	
