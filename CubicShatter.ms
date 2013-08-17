@@ -115,11 +115,9 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 	fn countPieces valX valY valZ objDim = (
 		if (tmpMesh != undefined) do (
 				
-			-- calculate how many cuts in every dimension
-			
-			
+			-- calculate how many cuts in every dimension			
 			if (chkSquare.checked == false) then (
-				planeCountY = (objDim.x / valX) as integer
+				planeCountX = (objDim.x / valX) as integer
 				planeCountY = (objDim.y / valY) as integer
 				planeCountZ = (objDim.z / valZ) as integer
 				) else (
@@ -127,8 +125,7 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 					planeCountY = (objDim.y / valX) as integer
 					planeCountZ = (objDim.z / valX) as integer
 					)
-			
-			if (planeCountX > 0) then (
+					
 				--count the number of cubes
 				sum = planeCountX * planeCountY * planeCountZ as integer
 				lblPiecesCount.text = sum as string
@@ -140,7 +137,6 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 							NumPolys = (tmpMesh.NumFaces * sum) as string
 							)
 				lblPolysCount.text = "~ " + NumPolys
-				spnWidth.value = objDim.X / planeCountX
 				
 				if (chkSquare.checked == true) do (
 					spnHeight.value = spnWidth.value
@@ -148,22 +144,10 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 					)
 				
 				-- plane count
+				if (planeCountX >= 1) then (plnCX = (planeCountX-1) as string) else (plnCX = 0 as string)
 				if (planeCountY >= 1) then (plnCY = (planeCountY-1) as string) else (plnCY = 0 as string)
-				if (planeCountY >= 1) then (plnCZ = (planeCountZ-1) as string) else (plnCZ = 0 as string)
-				lblPlaneCount.text = "X: " + (planeCountX-1) as string + " | Y: " + plnCY + " | Z: " + plnCZ
-				) else (
-					planeCountX = 1
-					spnWidth.value = (objDim.X / 2)
-					sum = planeCountX * planeCountY * planeCountZ as integer
-					lblPiecesCount.text = sum as string
-
-					if (chkTri.checked == true) then (
-						NumPolys = (tmpMesh.NumFaces * sum * 2) as string
-						) else (
-							NumPolys = (tmpMesh.NumFaces * sum) as string
-							)
-					lblPolysCount.text = "~ " + NumPolys
-					)
+				if (planeCountZ >= 1) then (plnCZ = (planeCountZ-1) as string) else (plnCZ = 0 as string)
+				lblPlaneCount.text = "X: " + plnCX as string + " | Y: " + plnCY + " | Z: " + plnCZ
 			)
 		)	
 
