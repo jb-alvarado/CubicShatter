@@ -219,7 +219,6 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 		if (orgObj != undefined) then (
 			if ( sum > 4000) do (
 				if queryBox ("Warning: You want to cut \"" + sum as string + "\" pieces. Are you sure that you want to continue?") title:"Cubic Shatter" then (
-					return true
 					) else (
 						return false
 						)
