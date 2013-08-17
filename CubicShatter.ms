@@ -28,6 +28,7 @@
 :: History --------------------------------------------------------------------------------------------------------
 :: 2013-08-12 writing a simple script
 :: 2013-08-15 writing the GUI and more functions
+:: 2013-08-18 add features
 ----------------------------------------------------------------------------------------------------------------------
 ::
 ::
@@ -35,7 +36,7 @@
 
 ----------------------------------------------------------------------------------------------------------------------
 --
--- Cubic Shatter v 0.5
+-- Cubic Shatter v 0.75
 -- Author: Jonathan Baecker (jb_alvarado) blog.pixelcrusher.de | www.pixelcrusher.de
 -- Createt: 2013-08-15
 --
@@ -69,13 +70,12 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 		spinner spnWidth "Cube Size X " pos:[68,90] width:75 height:16 range:[0.00,100000.00,10.00]
 		spinner spnHeight "Cube Size Y " pos:[68,114] width:75 height:16 range:[0.00,100000.00,10.00]
 		spinner spnDepth "Cube Size Z " pos:[68,138] width:75 height:16 range:[0.00,100000.00,10.00]
-		spinner spnID " Cut Material ID " pos:[215,90] width:45 height:16 type:#integer
-		checkbox chkUVXY "UV in XY" pos:[270,90] width:60 height:16
-		checkbox chkUVYZ "UV in YZ" pos:[270,114] width:60 height:16
-		checkbox chkUVZY "UV in ZY" pos:[270,138] width:60 height:16
-		checkbox chkRWMS "Real-World Map Size" pos:[335,90] width:167 height:16
-		checkbox chkTri "Triangulate Cap" pos:[335,114] width:102 height:16
-		checkbox chkSquare "Square Cubes" pos:[335,138] width:167 height:16
+		checkbox chkSquare "Square Cubes" pos:[152,90] width:100 height:16
+		spinner spnMatID "Material ID " pos:[215,114] width:45 height:16 type:#integer
+		spinner spnMapID "Map Channel " pos:[215,138] width:45 height:16 range:[1,10,2] type:#integer
+		checkbox chkMap "Generate Mapping Coords." pos:[270,90] width:170 height:16
+		checkbox chkRWMS "Real-World Map Size" pos:[270,114] width:167 height:16
+		checkbox chkTri "Triangulate Cap" pos:[270,138] width:102 height:16
 		
 	groupBox grpProgress "Progress" pos:[10,164] width:500 height:54
 		progressBar pbProgressBar "" pos:[20,187] width:309 height:15 color:[0,200,0]
@@ -112,6 +112,61 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 		-- plane count
 		lblPlaneCount.text = "X: 1 | Y: 1 | Z: 1"
 		)
+		
+	fn countPieces valX valY valZ objDim = (
+		if (tmpMesh != undefined) do (
+				
+			-- calculate how many cuts in every dimension
+			
+			
+			if (chkSquare.checked == false) then (
+				planeCountY = (objDim.x / valX) as integer
+				planeCountY = (objDim.y / valY) as integer
+				planeCountZ = (objDim.z / valZ) as integer
+				) else (
+					planeCountX = (objDim.x / valX) as integer
+					planeCountY = (objDim.y / valX) as integer
+					planeCountZ = (objDim.z / valX) as integer
+					)
+			
+			if (planeCountX > 0) then (
+				--count the number of cubes
+				sum = planeCountX * planeCountY * planeCountZ as integer
+				lblPiecesCount.text = sum as string
+				
+				-- count the number of polygons
+				if (chkTri.checked == true) then (
+						NumPolys = (tmpMesh.NumFaces * sum * 2) as string
+						) else (
+							NumPolys = (tmpMesh.NumFaces * sum) as string
+							)
+				lblPolysCount.text = "~ " + NumPolys
+				spnWidth.value = objDim.X / planeCountX
+				
+				if (chkSquare.checked == true) do (
+					spnHeight.value = spnWidth.value
+					spnDepth.value = spnWidth.value
+					)
+				
+				-- plane count
+				if (planeCountY >= 1) then (plnCY = (planeCountY-1) as string) else (plnCY = 0 as string)
+				if (planeCountY >= 1) then (plnCZ = (planeCountZ-1) as string) else (plnCZ = 0 as string)
+				lblPlaneCount.text = "X: " + (planeCountX-1) as string + " | Y: " + plnCY + " | Z: " + plnCZ
+				) else (
+					planeCountX = 1
+					spnWidth.value = (objDim.X / 2)
+					sum = planeCountX * planeCountY * planeCountZ as integer
+					lblPiecesCount.text = sum as string
+
+					if (chkTri.checked == true) then (
+						NumPolys = (tmpMesh.NumFaces * sum * 2) as string
+						) else (
+							NumPolys = (tmpMesh.NumFaces * sum) as string
+							)
+					lblPolysCount.text = "~ " + NumPolys
+					)
+			)
+		)	
 
 	-- checkboxen change state
 	on chkUVSource changed theState do (
@@ -136,120 +191,44 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 			spnDepth.enabled = false
 			spnHeight.value = spnWidth.value
 			spnDepth.value = spnWidth.value
+			valX = spnWidth.value
+			valY = spnWidth.value
+			valZ = spnWidth.value
+			countPieces valX valY valZ objDim
 			) else (
 				spnHeight.enabled = true
 				spnDepth.enabled = true
+				valX = spnWidth.value
+				valY = spnHeight.value
+				valZ = spnDepth.value
+				countPieces valX valY valZ objDim
 				)
 	)
+	
+	on chkTri changed theState do (
+		valX = spnWidth.value
+		valY = spnHeight.value
+		valZ = spnDepth.value
+		countPieces valX valY valZ objDim
+		)
 		
 	-- spinner change value
 	on spnWidth changed valX do (
-		if (tmpMesh != undefined) do (
-				
-			-- calculate how many cuts in every dimension
-			planeCountX = (objDim.x / valX) as integer
-			
-			if (chkSquare.checked == false) then (
-				planeCountY = (objDim.y / spnHeight.value) as integer
-				planeCountZ = (objDim.z / spnDepth.value) as integer
-				) else (
-					planeCountY = (objDim.y / valX) as integer
-					planeCountZ = (objDim.z / valX) as integer
-					)
-			
-			if (planeCountX > 0) then (
-				--count the number of cubes
-				sum = planeCountX * planeCountY * planeCountZ as integer
-				lblPiecesCount.text = sum as string
-				
-				-- count the number of polygons
-				NumPolys = (tmpMesh.NumFaces * sum) as string
-				lblPolysCount.text = "~ " + NumPolys
-				spnWidth.value = objDim.X / planeCountX
-				
-				if (chkSquare.checked == true) do (
-					spnHeight.value = spnWidth.value
-					spnDepth.value = spnWidth.value
-					)
-				
-				-- plane count
-				if (planeCountY >= 1) then (plnCY = (planeCountY-1) as string) else (plnCY = 0 as string)
-				if (planeCountY >= 1) then (plnCZ = (planeCountZ-1) as string) else (plnCZ = 0 as string)
-				lblPlaneCount.text = "X: " + (planeCountX-1) as string + " | Y: " + plnCY + " | Z: " + plnCZ
-				) else (
-					planeCountX = 1
-					spnWidth.value = (objDim.X / 2)
-					sum = planeCountX * planeCountY * planeCountZ as integer
-					lblPiecesCount.text = sum as string
-
-					NumPolys = (tmpMesh.NumFaces * sum) as string
-					lblPolysCount.text = "~ " + NumPolys
-					)
-			)
+		valY = spnHeight.value
+		valZ = spnDepth.value
+		countPieces valX valY valZ objDim
 		)
 		
 	on spnHeight changed valY do (
-		if (tmpMesh != undefined) do (
-				
-			-- calculate how many cuts in every dimension
-			planeCountX = (objDim.x / spnWidth.value) as integer
-			planeCountY = (objDim.y / valY) as integer
-			planeCountZ = (objDim.z / spnDepth.value) as integer
-			
-			if (planeCountY > 0) then (
-				--count the number of cubes
-				sum = planeCountX * planeCountY * planeCountZ as integer
-				lblPiecesCount.text = sum as string
-				
-				-- count the number of polygons
-				NumPolys = (tmpMesh.NumFaces * sum) as string
-				lblPolysCount.text = "~ " + NumPolys
-				spnHeight.value = objDim.y / planeCountY
-				
-				-- plane count
-				lblPlaneCount.text = "X: " + (planeCountX-1) as string + " | Y: " + (planeCountY-1) as string + " | Z: " + (planeCountZ-1) as string
-				) else (
-					planeCountY = 1
-					spnHeight.value = (objDim.y / 2)
-					sum = planeCountX * planeCountY * planeCountZ as integer
-					lblPiecesCount.text = sum as string
-
-					NumPolys = (tmpMesh.NumFaces * sum) as string
-					lblPolysCount.text = "~ " + NumPolys
-					)
-			)
+		valX = spnWidth.value
+		valZ = spnDepth.value
+		countPieces valX valY valZ objDim
 		)
 		
 	on spnDepth changed valZ do (
-		if (tmpMesh != undefined) do (
-				
-			-- calculate how many cuts in every dimension
-			planeCountX = (objDim.x / spnWidth.value) as integer
-			planeCountY = (objDim.y / spnHeight.value) as integer
-			planeCountZ = (objDim.z / valZ) as integer
-			
-			if (planeCountZ > 0) then (
-				--count the number of cubes
-				sum = planeCountX * planeCountY * planeCountZ as integer
-				lblPiecesCount.text = sum as string
-				
-				-- count the number of polygons
-				NumPolys = (tmpMesh.NumFaces * sum) as string
-				lblPolysCount.text = "~ " + NumPolys
-				spnDepth.value = objDim.Z / planeCountZ
-				
-				-- plane count
-				lblPlaneCount.text = "X: " + (planeCountX-1) as string + " | Y: " + (planeCountY-1) as string + " | Z: " + (planeCountZ-1) as string
-				) else (
-					planeCountZ = 1
-					spnDepth.value = (objDim.Z / 2)
-					sum = planeCountX * planeCountY * planeCountZ as integer
-					lblPiecesCount.text = sum as string
-
-					NumPolys = (tmpMesh.NumFaces * sum) as string
-					lblPolysCount.text = "~ " + NumPolys
-					)
-			)
+		valX = spnWidth.value
+		valY = spnHeight.value
+		countPieces valX valY valZ objDim
 		)	
 	
 	-- button process cut cubes
@@ -263,7 +242,9 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 						)
 				)
 					delete tmpMesh
-					deselect orgObj
+					max modify mode
+					disableSceneRedraw()
+					clearSelection()
 					pbProgressBar.value = 0
 					if (chkCopy.checked == true) then obj = copy orgObj else obj = orgObj
 					CenterPivot obj
@@ -512,16 +493,22 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 										join objArray3 #(obj)
 										pbProgressBar.value = 100.000 / sum * (planeSumZ.count + 1)
 									)
-						if (spnID.value > 0) do (
+						if (spnMatID.value > 0) do (
 							for obZ in objArray3 do (
-								for f in getFaceSelection obZ do setFaceMatID obZ f spnID.value
+								for f in getFaceSelection obZ do setFaceMatID obZ f spnMatID.value
 								setFaceSelection obZ -(getFaceSelection obZ)
-								if (spnID.value > 1) then (
+								if (spnMatID.value > 1) then (
 									for g in getFaceSelection obZ do setFaceMatID obZ g 1
 									) else (for g in getFaceSelection obZ do setFaceMatID obZ g 2)
-								setFaceSelection obZ #{}
+								setFaceSelection obZ -(getFaceSelection obZ)
 								)
-							)			
+							)
+						if (chkMap.checked == true) do (
+							for obM in objArray3 do (
+								addModifier obM (uvwMap maptype:4 length:objDim.y width:objDim.z height:objDim.x realWorldMapSize:chkRWMS.checked mapChannel:spnMapID.value)								
+								convertToMesh obM
+								)
+							)							
 						)
 					pbProgressBar.value = 100
 					
