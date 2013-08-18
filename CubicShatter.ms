@@ -43,9 +43,8 @@
 ----------------------------------------------------------------------------------------------------------------------
 */
 ( --start script
-
+global CubicShatter
 try (destroyDialog CubicShatter) catch ()
-
 rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 	
 	--input
@@ -62,13 +61,13 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 		label lblPiecesCount "0" pos:[320,30] width:54 height:16
 		label lblPolys "Polys:" pos:[280,50] width:35 height:16
 		label lblPolysCount "0" pos:[320,50] width:54 height:16
-		label lblCutPlanes "Cut Planes Count:" pos:[380,30] width:92 height:16
+		label lblCutPlanes "Cube Number In Axis:" pos:[380,30] width:110 height:16
 		label lblPlaneCount "X: 0 | Y: 0 | Z: 0" pos:[380,50] width:120 height:16
 	
 	groupBox grpCubes "Cubes Settings" pos:[10,70] width:500 height:94
-		spinner spnWidth "Cube Size X " pos:[68,90] width:75 height:16 range:[0.00,100000.00,10.00]
-		spinner spnHeight "Cube Size Y " pos:[68,114] width:75 height:16 range:[0.00,100000.00,10.00]
-		spinner spnDepth "Cube Size Z " pos:[68,138] width:75 height:16 range:[0.00,100000.00,10.00]
+		spinner spnWidth "Cube Size X " pos:[68,90] width:75 height:16 range:[0.00,100000.00,10.00] type:#worldunits
+		spinner spnHeight "Cube Size Y " pos:[68,114] width:75 height:16 range:[0.00,100000.00,10.00] type:#worldunits
+		spinner spnDepth "Cube Size Z " pos:[68,138] width:75 height:16 range:[0.00,100000.00,10.00] type:#worldunits
 		checkbox chkSquare "Square Cubes" pos:[152,90] width:100 height:16
 		spinner spnMatID "Material ID " pos:[215,114] width:45 height:16 type:#integer
 		spinner spnMapID "Map Channel " pos:[215,138] width:45 height:16 range:[1,10,2] type:#integer
@@ -109,7 +108,7 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 		lblPolysCount.text = "~ " + NumPolys
 
 		-- plane count
-		lblPlaneCount.text = "X: 1 | Y: 1 | Z: 1"
+		lblPlaneCount.text = "X: 2 | Y: 2 | Z: 2"
 		)
 		
 	fn countPieces valX valY valZ objDim = (
@@ -125,7 +124,10 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 					planeCountY = (objDim.y / valX) as integer
 					planeCountZ = (objDim.z / valX) as integer
 					)
-					
+
+				if (planeCountX == 0 ) do planeCountX = 1
+				if (planeCountY == 0 ) do planeCountY = 1
+				if (planeCountZ == 0 ) do planeCountZ = 1
 				--count the number of cubes
 				sum = planeCountX * planeCountY * planeCountZ as integer
 				lblPiecesCount.text = sum as string
@@ -144,30 +146,14 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 					)
 				
 				-- plane count
-				if (planeCountX >= 1) then (plnCX = (planeCountX-1) as string) else (plnCX = 0 as string)
-				if (planeCountY >= 1) then (plnCY = (planeCountY-1) as string) else (plnCY = 0 as string)
-				if (planeCountZ >= 1) then (plnCZ = (planeCountZ-1) as string) else (plnCZ = 0 as string)
+				if (planeCountX >= 1) then (plnCX = (planeCountX) as string) else (plnCX = 0 as string)
+				if (planeCountY >= 1) then (plnCY = (planeCountY) as string) else (plnCY = 0 as string)
+				if (planeCountZ >= 1) then (plnCZ = (planeCountZ) as string) else (plnCZ = 0 as string)
 				lblPlaneCount.text = "X: " + plnCX as string + " | Y: " + plnCY + " | Z: " + plnCZ
 			)
 		)	
 
-	-- checkboxen change state
-	on chkUVSource changed theState do (
-		chkUVCube.checked = false
-		)
-		
-	on chkUVCube changed theState do (
-		chkUVSource.checked = false
-		)	
-		
-	on chkToMesh changed theState do (
-		if (chkToPoly.checked == false) then (chkToPoly.checked = true) else (chkToPoly.checked = false)
-		)
-		
-	on chkToPoly changed theState do (
-		if (chkToMesh.checked == false) then (chkToMesh.checked = true) else (chkToMesh.checked = false)
-		)	
-	
+	-- checkboxen change state	
 	on chkSquare changed theState do (
 		if (chkSquare.checked == true) then (
 			spnHeight.enabled = false
@@ -223,7 +209,7 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 						return false
 						)
 				)
-					delete tmpMesh
+
 					max modify mode
 					disableSceneRedraw()
 					clearSelection()
@@ -233,6 +219,8 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 					obj.pivot.z = obj.min.z
 					resetXForm obj
 					convertToMesh obj
+				
+					if (chkTri.checked == true) then (tris = 1) else (tris = 0)
 					
 					if (planeCountX > 1) then (
 						planeSumX = for x = 1 to planeCountX - 1 collect (matrix3 [0,0,-1] [0,1,0] [1,0,0] [(objDim.x / planeCountX * x + obj.min.x - obj.pos.x), (obj.max.y + obj.min.y) / 2, (obj.max.z + obj.min.z) / 2])
@@ -255,12 +243,8 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 							ob1.cutPlane1.slice_plane.transform = planeSumX[a]
 							addModifier ob1 (sliceModifier name:"cutPlane2" slice_type:3)
 							if (a-1 > 0) do (ob1.cutPlane2.slice_plane.transform = planeSumX[a-1])
-							addModifier ob1 (cap_holes())
-							
-							if (chkTri.checked == true) do (
-								ob1.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-								)
-								
+							addModifier ob1 (cap_holes Make_All_New_Edges_Visible:tris)
+
 							if (planeSumY == undefined AND planeSumZ == undefined) then (
 								CenterPivot ob1
 								resetXForm ob1
@@ -269,16 +253,12 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 									convertToMesh ob1
 									)
 							join objArray1 #(ob1)
-							pbProgressBar.value = 100.000 / sum * a	
+							pbProgressBar.value = 100.000 / planeSumX.count * a
 							)
 						addModifier obj (sliceModifier name:"cutPlane3" slice_type:3)
 						obj.cutPlane3.slice_plane.transform = planeSumX[planeSumX.count]
-						addModifier obj (cap_holes())
-						
-						if (chkTri.checked == true) do (
-								obj.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-								)
-								
+						addModifier obj (cap_holes Make_All_New_Edges_Visible:tris)
+
 						if (planeSumY == undefined) then (
 							CenterPivot obj
 							resetXForm obj
@@ -287,8 +267,6 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 								convertToMesh
 								)
 						join objArray1 #(obj)
-
-						pbProgressBar.value = 100.000 / sum * (planeSumX.count + 1)	
 					)
 					
 					-- cut objects in y direction
@@ -302,23 +280,15 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 									if (c+1 <= planeSumY.count) do (ob2.cutPlane1.slice_plane.transform = planeSumY[c+1])
 									addModifier ob2 (sliceModifier name:"cutPlane2" slice_type:2)
 									ob2.cutPlane2.slice_plane.transform = planeSumY[c]
-									addModifier ob2 (cap_holes())
-									
-									if (chkTri.checked == true) do (
-										ob2.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-										)
+									addModifier ob2 (cap_holes Make_All_New_Edges_Visible:tris)
+
 									convertToMesh ob2
 									join objArray2 #(ob2)
-									pbProgressBar.value = 100.000 / sum * (planeSumX.count + b)	
 									)
 								addModifier objArray1[b] (sliceModifier name:"cutPlane3" slice_type:3)
 								objArray1[b].cutPlane3.slice_plane.transform = planeSumY[1]
-								addModifier objArray1[b] (cap_holes())
-									
-								if (chkTri.checked == true) do (
-									objArray1[b].modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-									)	
-								
+								addModifier objArray1[b] (cap_holes Make_All_New_Edges_Visible:tris)
+
 								if (planeSumZ == undefined) then (
 										CenterPivot objArray1[b]
 										resetXForm objArray1[b]
@@ -327,7 +297,7 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 											convertToMesh objArray1[b]
 											)
 								join objArray2 #(objArray1[b])
-								pbProgressBar.value = 100.000 / sum * (planeSumX.count + planeSumY.count + 1)
+								pbProgressBar.value = 100.000 / objArray1.count * b
 								)	
 							) else (
 								for c = 1 to planeSumY.count do (
@@ -336,12 +306,8 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 									if (c+1 <= planeSumY.count) do (ob2.cutPlane1.slice_plane.transform = planeSumY[c+1])
 									addModifier ob2 (sliceModifier name:"cutPlane2" slice_type:2)
 									ob2.cutPlane2.slice_plane.transform = planeSumY[c]
-									addModifier ob2 (cap_holes())
-										
-									if (chkTri.checked == true) do (
-										ob2.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-										)	
-									
+									addModifier ob2 (cap_holes Make_All_New_Edges_Visible:tris)
+
 									if (planeSumZ == undefined) then (
 										CenterPivot ob2
 										resetXForm ob2
@@ -350,15 +316,11 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 											convertToMesh ob2
 											)
 									join objArray2 #(ob2)
-									pbProgressBar.value = 100.000 / sum * c
+									pbProgressBar.value = 100.000 / planeSumY.count * c
 									)
 								addModifier obj (sliceModifier name:"cutPlane3" slice_type:3)
 								obj.cutPlane3.slice_plane.transform = planeSumY[1]
-								addModifier obj (cap_holes())
-									
-								if (chkTri.checked == true) do (
-									obj.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-									)	
+								addModifier obj (cap_holes Make_All_New_Edges_Visible:tris)
 
 								if (planeSumZ == undefined) then (
 									CenterPivot obj
@@ -368,11 +330,10 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 										convertToMesh obj
 										)
 								join objArray2 #(obj)
-								pbProgressBar.value = 100.000 / sum * (planeSumY.count + 1)
 								)		
 						)
 
-					-- cut objects in y direction
+					-- cut objects in z direction
 					if (planeSumZ != undefined) do (
 						objArray3 = #()
 						if (objArray2 != undefined) then (
@@ -383,31 +344,23 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 									ob3.cutPlane1.slice_plane.transform = planeSumZ[j]
 									addModifier ob3 (sliceModifier name:"cutPlane2" slice_type:3)
 									if (j-1 > 0) do (ob3.cutPlane2.slice_plane.transform = planeSumZ[j-1])
-									addModifier ob3 (cap_holes())
-										
-									if (chkTri.checked == true) do (
-										ob3.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-										)
-								
+									addModifier ob3 (cap_holes Make_All_New_Edges_Visible:tris)
+
 									CenterPivot ob3
 									resetXForm ob3
 									convertToMesh ob3
 									join objArray3 #(ob3)
-									pbProgressBar.value = 100.000 / sum * (planeSumX.count + planeSumY.count + j)
 									)
 									addModifier objArray2[i] (sliceModifier name:"cutPlane3" slice_type:3)
 									objArray2[i].cutPlane3.slice_plane.transform = planeSumZ[planeSumZ.count]
-									addModifier objArray2[i] (cap_holes())
-										
-									if (chkTri.checked == true) do (
-										objArray2[i].modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-										)	
-										
+									addModifier objArray2[i] (cap_holes Make_All_New_Edges_Visible:tris)
+
 									CenterPivot objArray2[i]
 									resetXForm objArray2[i]
 									convertToMesh objArray2[i]
 									join objArray3 #(objArray2[i])
-									pbProgressBar.value = 100.000 / sum * (planeSumX.count + planeSumY.count + planeSumZ.count + i)
+									pbProgressBar.value = 100.000 / objArray2.count * i
+									windows.processPostedMessages()
 								)
 							) else if (objArray1 != undefined) then (
 								for i = 1 to objArray1.count do (
@@ -417,31 +370,23 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 										ob3.cutPlane1.slice_plane.transform = planeSumZ[j]
 										addModifier ob3 (sliceModifier name:"cutPlane2" slice_type:3)
 										if (j-1 > 0) do (ob3.cutPlane2.slice_plane.transform = planeSumZ[j-1])
-										addModifier ob3 (cap_holes())
-											
-										if (chkTri.checked == true) do (
-											ob3.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-											)
-											
+										addModifier ob3 (cap_holes Make_All_New_Edges_Visible:tris)
+
 										CenterPivot ob3
 										resetXForm ob3
 										convertToMesh ob3
 										join objArray3 #(ob3)
-										pbProgressBar.value = 100.000 / sum * (planeSumX.count + j)
 										)
 										addModifier objArray1[i] (sliceModifier name:"cutPlane3" slice_type:3)
 										objArray1[i].cutPlane3.slice_plane.transform = planeSumZ[planeSumZ.count]
-										addModifier objArray1[i] (cap_holes())
-											
-										if (chkTri.checked == true) do (
-											objArray1[i].modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-											)
-								
+										addModifier objArray1[i] (cap_holes Make_All_New_Edges_Visible:tris)
+
 										CenterPivot objArray1[i]
 										resetXForm objArray1[i]
 										convertToMesh objArray1[i]
 										join objArray3 #(objArray1[i])
-										pbProgressBar.value = 100.000 / sum * (planeSumX.count + planeSumZ.count + i)
+										pbProgressBar.value = 100.000 / objArray1.count * i
+										windows.processPostedMessages()
 									)
 								) else (
 									for j = 1 to planeSumZ.count do (
@@ -450,30 +395,23 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 										ob3.cutPlane1.slice_plane.transform = planeSumZ[j]
 										addModifier ob3 (sliceModifier name:"cutPlane2" slice_type:3)
 										if (j-1 > 0) do (ob3.cutPlane2.slice_plane.transform = planeSumZ[j-1])
-										addModifier ob3 (cap_holes())
-											
-										if (chkTri.checked == true) do (
-											ob3.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-											)
-								
+										addModifier ob3 (cap_holes Make_All_New_Edges_Visible:tris)
+
 										CenterPivot ob3
 										resetXForm ob3
 										convertToMesh ob3
 										join objArray3 #(ob3)
-										pbProgressBar.value = 100.000 / sum * j
+										pbProgressBar.value = 100.000 / planeSumZ.count * j
 										)
 										addModifier obj (sliceModifier name:"cutPlane3" slice_type:3)
 										obj.cutPlane3.slice_plane.transform = planeSumZ[planeSumZ.count]
-										addModifier obj (cap_holes())
-											
-										if (chkTri.checked == true) do (
-											obj.modifiers[#Cap_Holes].Make_All_New_Edges_Visible = 1
-											)
+										addModifier obj (cap_holes Make_All_New_Edges_Visible:tris)
+
 										CenterPivot obj
 										resetXForm obj
 										convertToMesh obj
 										join objArray3 #(obj)
-										pbProgressBar.value = 100.000 / sum * (planeSumZ.count + 1)
+										windows.processPostedMessages()
 									)
 						if (spnMatID.value > 0) do (
 							for obZ in objArray3 do (
@@ -506,7 +444,8 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 				)
 	)
 	
-	
+	on CubicShatter close do try (delete tmpMesh) catch ()
 	) -- rollout end
 createDialog CubicShatter style:#(#style_toolwindow, #style_border, #style_sysmenu)
+
 ) --end script
