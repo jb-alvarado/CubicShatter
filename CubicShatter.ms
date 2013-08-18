@@ -45,7 +45,7 @@
 ( --start script
 global CubicShatter
 try (destroyDialog CubicShatter) catch ()
-rollout CubicShatter "Cubic Shatter" width:520 height:228 (
+rollout CubicShatter "Cubic Shatter" width:520 height:248 (
 	
 	--input
 	fn geoFilter InputObj = (
@@ -75,9 +75,10 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 		checkbox chkRWMS "Real-World Map Size" pos:[270,114] width:167 height:16
 		checkbox chkTri "Triangulate Cap" pos:[270,138] width:102 height:16
 		
-	groupBox grpProgress "Progress" pos:[10,164] width:500 height:54
+	groupBox grpProgress "Progress" pos:[10,164] width:500 height:74
 		progressBar pbProgressBar "" pos:[20,187] width:309 height:15 color:[0,200,0]
-		button btnProgress "Start Cutting" pos:[340,180] width:160 height:30
+		button btnProgress "Start Cutting" pos:[340,187] width:160 height:40
+		label lblProgress "" pos:[20,210] width:250 height:16
 	
 	local orgObj
 	local objDim
@@ -209,8 +210,8 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 						return false
 						)
 				)
-
-					max modify mode
+					startPr = timeStamp()
+				
 					disableSceneRedraw()
 					clearSelection()
 					pbProgressBar.value = 0
@@ -236,6 +237,7 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 			
 					-- cut object in the x direction
 					if (planeSumX != undefined) do (
+						lblProgress.text = "Cutting Cubes in X Axis ..."
 						objArray1 = #()	
 						for a = 1 to planeSumX.count do (
 							ob1 = copy obj
@@ -271,6 +273,7 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 					
 					-- cut objects in y direction
 					if (planeSumY != undefined) do (
+						lblProgress.text = "Cutting Cubes in Y Axis ..."
 						objArray2 = #()
 						if (objArray1 != undefined) then (
 							for b = 1 to objArray1.count do (
@@ -336,6 +339,7 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 
 					-- cut objects in z direction
 					if (planeSumZ != undefined) do (
+						lblProgress.text = "Cutting Cubes in Z Axis ..."
 						objArray3 = #()
 						if (objArray2 != undefined) then (
 							for i = 1 to objArray2.count do (
@@ -414,24 +418,51 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 										join objArray3 #(obj)
 										windows.processPostedMessages()
 									)
-						if (spnMatID.value > 0) do (
-							for obZ in objArray3 do (
-								for f in getFaceSelection obZ do setFaceMatID obZ f spnMatID.value
-								setFaceSelection obZ -(getFaceSelection obZ)
+						)
+						
+					-- process Material IDs
+					startID = timeStamp()
+
+					if (spnMatID.value > 0) do (
+							lblProgress.text = "Process Material IDs ..."
+							for k = 1 to objArray3.count do (
+								for f in getFaceSelection objArray3[k] do setFaceMatID objArray3[k] f spnMatID.value
+								setFaceSelection objArray3[k] -(getFaceSelection objArray3[k])
 								if (spnMatID.value > 1) then (
-									for g in getFaceSelection obZ do setFaceMatID obZ g 1
-									) else (for g in getFaceSelection obZ do setFaceMatID obZ g 2)
-								setFaceSelection obZ -(getFaceSelection obZ)
+									for g in getFaceSelection objArray3[k] do setFaceMatID objArray3[k] g 1
+									) else (for g in getFaceSelection objArray3[k] do setFaceMatID objArray3[k] g 2)
+								setFaceSelection objArray3[k] #{}
+								pbProgressBar.value = 100.000 / objArray3.count * k
+								stampID = timeStamp()
+								if (((stampID - startID) / 1000.0) >= 5.00) do (
+									startID = timeStamp()
+									windows.processPostedMessages()
+									)	
+								)
+							windows.processPostedMessages()	
+							)
+							
+						-- process UVs
+						startUV = timeStamp()
+
+						if (chkMap.checked == true) do (
+							lblProgress.text = "Generate Mapping Coords. ..."
+							for l = 1 to objArray3.count do (
+								addModifier objArray3[l] (uvwMap maptype:4 length:objDim.y width:objDim.z height:objDim.x realWorldMapSize:chkRWMS.checked mapChannel:spnMapID.value)								
+								convertToMesh objArray3[l]
+								pbProgressBar.value = 100.000 / objArray3.count * l
+								stampUV = timeStamp()
+								if (((stampUV - startUV) / 1000.0) >= 5.00) do (
+									startUV = timeStamp()
+									windows.processPostedMessages()
+									)
 								)
 							)
-						if (chkMap.checked == true) do (
-							for obM in objArray3 do (
-								addModifier obM (uvwMap maptype:4 length:objDim.y width:objDim.z height:objDim.x realWorldMapSize:chkRWMS.checked mapChannel:spnMapID.value)								
-								convertToMesh obM
-								)
-							)							
-						)
 					pbProgressBar.value = 100
+					
+					endPr = timeStamp()
+							
+					lblProgress.text = "Done, in " + (((endPr - startPr) / 1000.0) as Integer) as string + " seconds! ..."
 					
 					-- clear variables and clean script cache
 					objArray1 = undefined
