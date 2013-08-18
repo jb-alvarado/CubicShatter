@@ -298,6 +298,7 @@ rollout CubicShatter "Cubic Shatter" width:520 height:228 (
 											)
 								join objArray2 #(objArray1[b])
 								pbProgressBar.value = 100.000 / objArray1.count * b
+								windows.processPostedMessages()
 								)	
 							) else (
 								for c = 1 to planeSumY.count do (
