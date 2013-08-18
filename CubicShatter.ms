@@ -147,9 +147,15 @@ rollout CubicShatter "Cubic Shatter" width:520 height:248 (
 					)
 				
 				-- plane count
-				if (planeCountX >= 1) then (plnCX = (planeCountX) as string) else (plnCX = 0 as string)
-				if (planeCountY >= 1) then (plnCY = (planeCountY) as string) else (plnCY = 0 as string)
-				if (planeCountZ >= 1) then (plnCZ = (planeCountZ) as string) else (plnCZ = 0 as string)
+				spnWidth.value = objDim.x / planeCountX
+				plnCX = (planeCountX) as string
+
+				spnHeight.value = objDim.Y / planeCountY
+				plnCY = (planeCountY) as string
+
+				spnDepth.value = objDim.Z / planeCountZ
+				plnCZ = (planeCountZ) as string
+
 				lblPlaneCount.text = "X: " + plnCX as string + " | Y: " + plnCY + " | Z: " + plnCZ
 			)
 		)	
