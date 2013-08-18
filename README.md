@@ -25,7 +25,7 @@ Download
 
 ### [Click here to download latest version](https://github.com/jb-alvarado/CubicShatter/archive/master.zip)
 
-Current release is **v0.75**
+Current release is **v0.85**
 
 For using it, go in 3Ds Max under MaxScript: Run Script... and select the script file.
 
