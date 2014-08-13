@@ -37,7 +37,7 @@
 ----------------------------------------------------------------------------------------------------------------------
 --
 -- Cubic Shatter v 0.85
--- Author: Jonathan Baecker (jb_alvarado) blog.pixelcrusher.de | www.pixelcrusher.de
+-- Author: Jonathan Baecker (jb_alvarado) blog.pixelcrusher.de | www.pixelcrusher.de | www.animations-and-more.com
 -- Createt: 2013-08-15
 --
 ----------------------------------------------------------------------------------------------------------------------
